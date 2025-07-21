@@ -1,0 +1,7 @@
+aiohttp==3.12.14
+beautifulsoup4==4.13.4
+kafka-python==2.2.15
+requests==2.32.4
+python-dotenv==1.1.1
+aiofiles==24.1.0
+asyncio==3.4.3
