@@ -1,0 +1,113 @@
+scraper:
+  user_agent: "StockTracker-Scraper/1.0"
+  concurrent_limit: 10
+  timeout: 30
+  retry_attempts: 3
+  retry_delay: 1
+  default_rate_limit: 1.0
+  stock_symbols:
+    - "AAPL"
+    - "GOOGL"
+    - "MSFT"
+    - "TSLA"
+    - "AMZN"
+    - "META"
+    - "NVDA"
+    - "JPM"
+    - "V"
+    - "WMT"
+
+kafka:
+  bootstrap_servers: "localhost:9092"
+  client_id: "stock-scraper"
+  acks: "all"
+  retries: 3
+  batch_size: 16384
+  linger_ms: 10
+  compression_type: "snappy"
+  max_in_flight: 5
+  enable_idempotence: true
+  topics:
+    stock_data: "stock-data"
+    news_data: "news-data"
+    economic_data: "economic-data"
+
+schema_registry:
+  url: "http://localhost:8081"
+
+apis:
+  alpha_vantage:
+    api_key: ${ALPHA_VANTAGE_API_KEY}
+    base_url: "https://www.alphavantage.co/query"
+    rate_limit: 5.0
+  
+  news_api:
+    api_key: ${NEWS_API_KEY}
+    base_url: "https://newsapi.org/v2"
+    rate_limit: 2.0
+  
+  fred:
+    api_key: ${FRED_API_KEY}
+    base_url: "https://api.stlouisfed.org/fred"
+    rate_limit: 1.0
+
+targets:
+  - name: "yahoo_finance"
+    url: "https://finance.yahoo.com"
+    data_type: "stock"
+    rate_limit: 2.0
+    timeout: 30
+    failure_threshold: 3
+    circuit_timeout: 60.0
+    headers:
+      Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+      Accept-Language: "en-US,en;q=0.5"
+    selector_config:
+      price: "[data-symbol] [data-field='regularMarketPrice']"
+      change: "[data-symbol] [data-field='regularMarketChange']"
+      volume: "[data-symbol] [data-field='regularMarketVolume']"
+    enabled: true
+
+  - name: "reuters_news"
+    url: "https://www.reuters.com/business/finance"
+    data_type: "news"
+    rate_limit: 1.0
+    timeout: 30
+    failure_threshold: 5
+    circuit_timeout: 120.0
+    headers:
+      Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+    selector_config:
+      title: "h3[data-testid='Heading'] a"
+      link: "h3[data-testid='Heading'] a"
+      summary: "[data-testid='Body'] p"
+    enabled: true
+
+monitoring:
+  metrics_port: 8000
+  health_check_interval: 60
+  log_level: "INFO"
+
+resilience:
+  circuit_breaker:
+    failure_threshold: 5
+    timeout: 60
+    expected_exception: "requests.RequestException"
+  
+  retry:
+    max_attempts: 3
+    backoff_multiplier: 2
+    max_delay: 60
+
+data_quality:
+  validation:
+    required_fields:
+      stock_data: ["symbol", "price", "timestamp"]
+      news_data: ["title", "url", "timestamp"]
+      economic_data: ["indicator", "value", "timestamp"]
+  
+  filters:
+    min_price: 0.01
+    max_price: 100000
+    min_volume: 0
+    max_content_length: 10000
