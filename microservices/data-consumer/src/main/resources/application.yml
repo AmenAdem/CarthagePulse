@@ -1,0 +1,167 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: data-consumer-service
+  
+  # Database configuration
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/stocktracker}
+    username: ${DATABASE_USERNAME:stocktracker}
+    password: ${DATABASE_PASSWORD:password}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 1200000
+      maximum-pool-size: 10
+      minimum-idle: 5
+      pool-name: StockTrackerCP
+
+  # JPA/Hibernate configuration
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        use_sql_comments: true
+        jdbc:
+          batch_size: 20
+          order_inserts: true
+          order_updates: true
+        cache:
+          use_second_level_cache: true
+          use_query_cache: true
+          region:
+            factory_class: org.hibernate.cache.jcache.JCacheRegionFactory
+
+  # Kafka configuration
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: data-consumer-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      max-poll-records: 500
+      fetch-min-size: 1024
+      fetch-max-wait: 500
+      session-timeout: 30000
+      heartbeat-interval: 3000
+      enable-auto-commit: false
+      auto-commit-interval: 1000
+
+  # Redis configuration for caching
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: 1
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+
+  # Cache configuration
+  cache:
+    type: redis
+    redis:
+      time-to-live: 300000 # 5 minutes
+      cache-null-values: false
+
+# Application-specific configuration
+app:
+  kafka:
+    topics:
+      stock-data: ${KAFKA_TOPIC_STOCK_DATA:stock-data}
+      news-data: ${KAFKA_TOPIC_NEWS_DATA:news-data}
+      economic-data: ${KAFKA_TOPIC_ECONOMIC_DATA:economic-data}
+  
+  websocket:
+    allowed-origins: ${WEBSOCKET_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:8080}
+  
+  data:
+    cleanup:
+      enabled: true
+      retention-days: 90
+    
+    batch-processing:
+      enabled: true
+      batch-size: 100
+      flush-interval: 5000
+
+# Circuit breaker configuration
+resilience4j:
+  circuitbreaker:
+    instances:
+      database:
+        register-health-indicator: true
+        ring-buffer-size-in-closed-state: 10
+        ring-buffer-size-in-half-open-state: 3
+        wait-duration-in-open-state: 10s
+        failure-rate-threshold: 50
+        record-exceptions:
+          - java.sql.SQLException
+          - org.springframework.dao.DataAccessException
+
+# Actuator configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,kafka
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+    kafka:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+        kafka.consumer.fetch.manager.fetch.size: true
+
+# Health checks
+  health:
+    kafka:
+      enabled: true
+    redis:
+      enabled: true
+    db:
+      enabled: true
+
+# Logging configuration
+logging:
+  level:
+    com.stocktracker.consumer: DEBUG
+    org.springframework.kafka: INFO
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/data-consumer.log
+    max-size: 100MB
+    max-history: 30
+
+# Performance tuning
+server:
+  tomcat:
+    threads:
+      max: 200
+      min-spare: 10
+    connection-timeout: 20000
+    max-connections: 8192
+    accept-count: 100
