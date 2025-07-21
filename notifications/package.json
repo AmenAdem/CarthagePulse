@@ -1,0 +1,24 @@
+{
+  "name": "stock-tracker-notifications",
+  "version": "1.0.0",
+  "description": "Notification service for stock tracker",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js"
+  },
+  "dependencies": {
+    "kafkajs": "^2.2.4",
+    "nodemailer": "^6.9.8",
+    "twilio": "^4.19.3",
+    "pg": "^8.11.3",
+    "winston": "^3.11.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "keywords": ["notifications", "kafka", "email", "sms"],
+  "author": "Stock Tracker Team",
+  "license": "MIT"
+}
