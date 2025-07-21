@@ -1,0 +1,8 @@
+com/investorpipeline/flink/EnrichedStockData.class
+com/investorpipeline/flink/StockDataProcessingJob$MovingAverageCalculator.class
+com/investorpipeline/flink/PriceAlert.class
+com/investorpipeline/flink/StockDataProcessingJob$StockDataParser.class
+com/investorpipeline/flink/StockDataProcessingJob.class
+com/investorpipeline/flink/StockDataProcessingJob$StockDataEnricher.class
+com/investorpipeline/flink/StockDataProcessingJob$PriceAlertGenerator.class
+com/investorpipeline/flink/MovingAverageData.class
