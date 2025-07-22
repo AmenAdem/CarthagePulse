@@ -1,4 +1,4 @@
-# Real-Time Investor Updates Pipeline
+# Market Stream Decision Engine
 
 A comprehensive real-time data pipeline built with modern microservices architecture, featuring Spring Boot services, enhanced Python scrapers, Apache Flink stream processing, and complete monitoring infrastructure.
 
